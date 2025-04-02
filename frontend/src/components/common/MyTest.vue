@@ -1,57 +1,74 @@
 <template>
-  <div class="grid-container">
-    <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="row">
-      <div
-        v-for="(cell, colIndex) in row"
-        :key="colIndex"
-        class="cell"
-        :class="{ active: cell.active }"
-        @click="toggleCell(rowIndex, colIndex)"
-      ></div>
-    </div>
+  <div
+    @dblclick="rename(true, $event)"
+    @click="dbDiff"
+    :class="isEdit ? 'is-sedit' : ''"
+    ref="reDom"
+  >
+    <el-input
+      @blur="rename(false, $event)"
+      maxlength="40"
+      @keyup.enter="rename(false, $event)"
+      v-model="label"
+      v-if="isEdit && !props.disabled"
+      ref="inpRef"
+    />
+    <popover :list="modelValue" v-else></popover>
   </div>
 </template>
 <script>
 export default {
-  name: 'MyTest',
-}
+  name: "Mytest",
+};
 </script>
 <script setup>
-import { ref } from 'vue'
+import { ref, defineProps, nextTick, defineEmits } from "vue";
+// import $ from 'jquery'
+const props = defineProps({
+  modelValue: String,
+  successRename: Function,
+  disabled: Boolean,
+});
+const emits = defineEmits(["update:modelValue", "edit", "singleClick"]);
+const isEdit = ref(false);
+const label = ref(props.modelValue);
+const inpRef = ref(null);
+const reDom = ref();
+let timeout = null;
+const rename = (edit, e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  clearTimeout(timeout);
+  // é¿å…é‡å¤è§¦å‘
+  if (isEdit.value === edit) return;
+  isEdit.value = edit;
+  emits("edit", edit);
+  nextTick(() => {
+    if (isEdit.value) {
+      inpRef.value.focus();
+      label.value = props.modelValue;
+    } else {
+      if (label.value && label.value !== props.modelValue) {
+        emits("update:modelValue", label.value);
+        props.successRename && props.successRename(label.value);
+      }
+    }
+  });
+};
 
-// ³õÊ¼»¯ 5x5 Íø¸ñ
-const grid = ref(
-  Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ active: false })))
-)
-
-// ÇÐ»»¸ñ×Ó×´Ì¬
-const toggleCell = (row, col) => {
-  grid.value[row][col].active = !grid.value[row][col].active
-}
+// ä¸ºäº†ç¡®ä¿åŒå‡»ä¸ä¼šè§¦å‘å•å‡»çš„äº‹ä»¶
+const dbDiff = (e) => {
+  e.stopPropagation();
+  clearTimeout(timeout);
+  if (isEdit.value) return;
+  timeout = setTimeout(function () {
+    emits("singleClick", e);
+    reDom.value.parentNode.click();
+  }, 300);
+};
 </script>
-
-<style scoped>
-.grid-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.row {
-  display: flex;
-  gap: 2px;
-}
-
-.cell {
-  width: 50px;
-  height: 50px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.cell.active {
-  background-color: #42b983; /* ¼¤»îÑÕÉ« */
+<style lang="scss" scoped>
+.is-edit {
+  background-color: rgb(228, 215, 250);
 }
 </style>

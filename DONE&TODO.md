@@ -81,10 +81,16 @@
   - 点击插件能够将插件分页显示的内容变更为对应的插件</u>
   - 每条音轨单独调节音量、声相
 - 编曲分页 `./components/Compose/Arrangement.vue`
-  - 显示五条轨道<u>上所有歌曲的Pattern `./components/Compose/SongDisplay.vue`
-  - 一个Pattern的侧边栏，显示当前所有的Pattern，可以新建、删除Pattern、将Patter拖动到对应的轨道上 `./components/Compose/PatternManager.vue`
-  - 一个钢琴窗界面，点按对应的Pattern，可以编辑音符 `./components/Compose/PianoRoll.vue`
-    - 左键点击空白处绘制音符，邮件点击音符删除之
+  - 一个Pattern的侧边栏，显示当前所有的Pattern，可以：`./components/Patterns`
+    - 在输入框中输入新的Pattern名称（也可以不输入，采用默认名称），点击加号新建
+    - 左键点击选中pattern
+    - 右键点击，经确认后删除Pattern、将放置到对应的轨道上 `./components/Patterns`
+    - 双击重命名Pattern，在出现的输入框中输入新名字，按enter重命名，按esc或者右键点击pattern取消重命名
+  - 显示五条轨道上所有歌曲的Pattern `./components/Channels`
+    - 左键将选中的Pattern放入轨道中
+    - 右键将轨道中的Pattern删除
+  - 一个钢琴窗界面，点按对应的Pattern，可以编辑音符 `./components/PianoRoll`
+    - 左键点击空白处绘制音符，右键点击音符删除之<u>
     - 拖动音符末尾改变长度
     - 框选多个音符拖拽移动、Ctrl + C复制和 Delete删除</u>
 
@@ -95,12 +101,16 @@
 **Developers** 还需要放<u>打钱二维码链接</u>，其他略
 
 ### 像素风格组件：
+`./compinents/common`
+
 - MyText：文本组件
 - MyInput：输入框组件
 - MyButton：按钮组件
 - MyKnob：旋钮组件
-- <u>MySlider：滑动条组件
-- MyCheckbox：复选框组件</u>
+- MySlider：滑动条组件
+- MySelect：下拉选择框组件
+- MyGrid：矩阵组件
+- MyTest：测试组件
 
 
 

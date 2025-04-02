@@ -1,6 +1,4 @@
 // store.js
-// import { set } from 'core-js/core/dict';
-// import { no } from 'element-plus/es/locale';
 import { createStore } from 'vuex';
 import createPersistedState from 'vuex-persistedstate';
 
@@ -9,12 +7,18 @@ export default createStore({
     notes: [],
     patterns: [],
     songs: [],
+    displays: [],
+
     selectedNotes: new Set(),
     separatorPosition: 300,
+    
     activeComposePage: "plugin",
+    activePattern: 0,
+
     exportFormat: '',
     songName: '',
     estimated_space: 0,
+
     scrollX: 0,
     scrollY: 0,
     channels: [
@@ -33,41 +37,28 @@ export default createStore({
       state.scrollX = x;
       state.scrollY = y;
     },
-    addPatternToChannel(state, { channelId, pattern }) {
-      const channel = state.channels.find(t => t.id === channelId);
-      if (channel) {
-        channel.patterns.push(pattern);
+
+
+    addDisplay(state, newDisplay) {
+      state.displays.push(newDisplay)
+      // console.log("display pattern")
+      for (var i = 0; i < state.displays.length; ++i){
+        console.log(state.displays[i]);
       }
     },
-    updateChannelPattern(state, { channelId, patternId, pattern }) {
-      const channel = state.channels.find(t => t.id === channelId);
-      if (channel) {
-        const index = channel.patterns.findIndex(p => p.id === patternId);
-        channel.patterns.splice(index, 1, pattern);
+    deleteDisplay(state, {id, channel}) {
+      const display = state.displays.find(p => (p.id === id) & (p.channel === channel));
+      if (display) {
+        const index = state.displays.findIndex(p => (p.id === id) & (p.channel === channel));
+        state.displays.splice(index, 1);
       }
     },
-    deleteChannelPattern(state, { channelId, patternId }) {
-      const channel = state.channels.find(t => t.id === channelId);
-      if (channel) {
-        const index = channel.patterns.findIndex(p => p.id === patternId);
-        channel.patterns.splice(index, 1);
-      }
-    },
-    initNotes(state) {
-      // console.log(typeof state.notes)
-      // for (var i = 0; i < 88; ++i) {
-      //   for (var j = 0; j < 16*8; ++j) {
-      //     state.notes.grid[i][j] = 0;
-      //   }
-      // }
-    // console.log("init notes", state.notes[11][21])
-    },
+
+
+
     addNote(state, note) {
       state.notes.push(note)
-      console.log("add notes")
-      // for note in state.notes {
-      //   console.log(note)
-      // }
+      // console.log("add notes")
     },
     deleteNote(state, id) {
       state.notes = state.notes.filter(n => n.id !== id);
@@ -77,19 +68,23 @@ export default createStore({
       if (note) note.length = length;
     },
 
-    addPattern(state, pattern) {
+
+    addPattern:(state, pattern) => {
       state.patterns.push(pattern)
-      console.log("add patterns")
-      // for pattern in state.patterns {
-      //   console.log(pattern)
-      // }
     },
     deletePattern(state, id) {
       state.patterns = state.patterns.filter(n => n.id !== id);
+      state.displays = state.displays.filter(n => n.id !== id);
+      state.notes = []
     },
-    updatePatternLength(state, { id, length }) {
-      const pattern = state.patterns.find(n => n.id === id);
-      if (pattern) pattern.length = length;
+    renamePattern(state, {id, name}){
+      // console.log("renamepattern", name)
+      const pattern = state.patterns.find(p => p.id === id)
+      if(pattern) pattern.name = name
+    },
+    sortPattern(state, {index, newIndex}) {
+      const draggedItem = state.patterns.splice(index, 1)[0]; // 移除被拖拽的元素
+      state.patterns.splice(newIndex, 0, draggedItem);
     },
 
 
@@ -104,18 +99,40 @@ export default createStore({
       state.exportFormat = format;
     },
 
+
     addSong(state, song) {
       state.songs.push(song);
     },
     deleteSong(state, index) {
         state.songs.splice(index, 1);
     },
+
+
     setActiveComposePage(state, page) {
         state.activeComposePage = page;
+    },
+    setActivePattern(state, id) {
+      const pattern = state.patterns.find(p => p.id === state.activePattern)
+      if(pattern){
+        console.log("save notes to old pattern", pattern.notes, state.notes)
+        pattern.notes = state.notes
+      } 
+      state.activePattern = id;
+      const newPattern = state.patterns.find(p => p.id === id)
+      if(newPattern){
+        state.notes = newPattern.notes
+        console.log("load notes from new pattern", newPattern.notes, state.notes)
+      }
     },
     setSongName(state, name) {
         state.songName = name;
     },
   },
-  plugins: [createPersistedState()],
+  getters: {
+    getActivePattern: (state) => 
+      state.patterns.find(p => p.id === state.activePattern)
+  },
+  plugins: [
+    createPersistedState()
+  ],
 });
