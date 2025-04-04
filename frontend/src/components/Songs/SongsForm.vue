@@ -1,3 +1,4 @@
+<!-- 歌曲表单提交逻辑 -->
 <template>
   <div class="container">
     <div class="input-container">
@@ -5,42 +6,30 @@
       <my-button
         type="primary"
         @click="addItem"
-        text="新增歌曲"
+        text="添加歌曲"
         class="add-btn"
-        size="medium"
-      />
+        size="medium" />
     </div>
     <SongsList ref="songsListRef" />
   </div>
 </template>
 
-<script>
-import SongsList from "./SongsList.vue";
-export default {
-  data() {
-    return {
-      songName: "untitled",
-    };
-  },
-  // mounted() {
-  //   this.$nextTick(() => {
-  //     console.log("songsForm已初始化:", this.$refs.songsListRef.songs);
-  //   });
-  // },
-  components: {
-    SongsList,
-  },
-  methods: {
-    addItem() {
-      if (this.songName.trim()) {
-        this.$refs.songsListRef.addItem(this.songName);
-      } else {
-        this.$refs.songsListRef.addItem("untitled");
-      }
-      this.songName = "";
-    },
-  },
-};
+<script setup>
+import { ref } from "vue"
+import SongsList from ".//SongsList.vue"
+
+const songName = ref("")
+const songsListRef = ref(null)
+
+// 检查并提交歌曲名字
+const addItem = () => {
+  if (songName.value.trim()) {
+    songsListRef.value.addItem(songName.value)
+  } else {
+    songsListRef.value.addItem("untitled")
+  }
+  songName.value = ""
+}
 </script>
 
 <style scoped>

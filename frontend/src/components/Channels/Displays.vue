@@ -1,187 +1,201 @@
+<!-- pattern��channel�е�չʾ״̬ -->
 <template>
   <div
-    @mousedown.left="handleCanvasMouseDown"
-  >
-    <div
-      v-for="display in displays"
-      class="pattern"
-      :style="patternStyle(display.channel, display.starttime, 2, display.color)"
-      @click.right="deleteDisplay(display.id, display.channel)"
-      >
+    @mousedown.left="handleCanvasMouseLeftDown"
+    @mouseup="handleCanvasMouseUp"
+    @mousemove="handleCanvasMouseMove"
+    @contextmenu.prevent>
+    <div v-for="display in displays">
+      <div
+        class="display"
+        :style="
+          patternStyle(
+            display.channel,
+            display.starttime,
+            display.duration,
+            display.color,
+          )
+        "
+        @click.right="deleteDisplay(display.id)"
+        @mousedown.left="startMoveDisplay(display, $event)"></div>
+      <div
+        class="display-resize-handle"
+        :style="
+          resizeHandleStyle(
+            display.channel,
+            display.starttime,
+            display.duration,
+          )
+        "
+        @mousedown.left="startResizeDisplay(display, $event)"></div>
     </div>
     <my-grid :n_rows="5" :h_rows="50" ref="gridEl" />
-    <div class="pattern-resize-handle"></div>
   </div>
 </template>
-<script>
-export default {
-  name: 'Score',
-}
-</script>
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useStore, mapState } from 'vuex'
+import { ref, computed } from "vue"
+import { useStore, mapState } from "vuex"
 
 const store = useStore()
 const displays = computed(() => store.state.displays)
-const pattern = computed(() => store.getters.getActivePattern);
-const activePattern = computed(() => store.state.activePattern); // 跟踪激活状态
+const pattern = computed(() => store.getters.getActivePattern)
+const activePattern = computed(() => store.state.activePattern)
 
+const moveX = ref(0)
+const moveY = ref(0)
+const resizeX = ref(0)
+const tmpDuration = ref(2)
 const gridEl = ref(null)
 
-// const patterns = computed(() => {
-// 	let pattern;
-// 	for (pattern in store.state.patterns) {
-// 		console.log(pattern.pitch);
-// 	}
-// 	return store.state.patterns
-// })
-
-// 音符样式计算
 const patternStyle = (row, col, duration, color) => ({
   left: `${col * 25}px`,
   top: `${row * 50 + 1}px`,
-  width: `${duration * 25 - 3 - 1}px`,
+  width: `${duration * 25 - 1}px`,
   height: `${50 - 2}px`,
   backgroundColor: color,
-  borderRight: `3px solid #666`
 })
 
-// 事件处理函数
+const resizeHandleStyle = (row, starttime, duration) => ({
+  left: `${(starttime + duration) * 25 - 5}px`,
+  top: `${row * 50 + 1}px`,
+  width: `5px`,
+  height: `${50 - 2}px`,
+})
+
 let dragState = null
 const selectedpatterns = ref(new Set())
 const selectionBox = ref({ x1: 0, y1: 0, x2: 0, y2: 0 })
 
-onMounted(() => {
-  // console.log("displays: ", displays)
-  // console.log("Patterns: ", patterns)
-  // store.commit('initpatterns')
-})
-
-const handleCanvasMouseDown = (e) => {
-  // for (var pattern = 0; pattern < store.state.patterns.length; pattern++) {
-  //   console.log(pattern.id)
-  // }
-  // let x2 = e.clientX - rect.left
-  // let y2 = e.clientY - rect.top
+const handleCanvasMouseLeftDown = (e) => {
+  e.preventDefault()
   if (e.ctrlKey || e.metaKey) return
 
-  if (e.target.classList.contains('grid')) {
-    // 初始化框选
-    const rect = e.target.getBoundingClientRect()
-    // let x1 = e.clientX - rect.left
-    // let y1 = e.clientY - rect.top
-    // selectionBox.value = {
-    // 	x1: e.clientX - rect.left,
-    // 	y1: e.clientY - rect.top,
-    // 	x2: e.clientX - rect.left,
-    // 	y2: e.clientY - rect.top
-    // }
-    // dragState = { type: 'select' }
-    // selectedpatterns.value.clear()
-    // 创建新音符逻辑
-    // const rect = e.target.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    console.log("add display:", store.state.activePattern)
-    if(activePattern.value > 0){
-      const newDisplay = {
-        id: pattern.value.id,
-        starttime: Math.floor(x / 25),
-        duration: 1,
-        channel: Math.floor(y / 50),
-        color: pattern.value.color
-      }
-      // console.log('handleCanvasMouseDown', store.state.patterns, newpattern )
-      store.commit('addDisplay', newDisplay)      
-    }
+  if (e.target.classList.contains("grid")) {
+    // ����display
+    addDisplay(e)
   }
 }
 
-const deleteDisplay = (id, channel) => {
-  store.commit('deleteDisplay', {id, channel})
+
+const handleCanvasMouseMove = (e) => {
+  if (!dragState) return
+  // ��קdisplayβ��  
+  if (dragState.type === "resize") {
+    resizeDisplay(e)
+    return
+  }
+  // Ų��display  
+  if (dragState.type === "move") {
+    moveDisplay(e)
+    return
+  }
 }
 
-// const dragPattern = (pattern, e) => {
-//   dragState = {
-//     type: 'move',
-//     patternId: pattern.id,
-//     offsetX: e.offsetX,
-//     startX: e.clientX,
-//     startY: e.clientY,
-//     originalPos: { ...pattern },
-//   }
-// }
+const handleCanvasMouseUp = () => {
+  dragState = null
+}
 
-// const handleCanvasMouseMove = (e) => {
-// 	if (!dragState) return
+const addDisplay = (e) => {
+  const rect = e.target.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  // console.log("add display:", store.state.activePattern)
+  if (activePattern.value > 0) {
+    const newDisplay = {
+      id: Date.now(),
+      patternId: pattern.value.id,
+      starttime: Math.floor(x / 25),
+      duration: tmpDuration.value,
+      channel: Math.floor(y / 50),
+      color: pattern.value.color,
+    }
+    store.commit("addDisplay", newDisplay)
+  }
+}
 
-// 	// 处理框选更新
-// 	if (dragState.type === 'select') {
-// 		const rect = e.target.getBoundingClientRect()
-// 		selectionBox.value.x2 = e.clientX - rect.left
-// 		selectionBox.value.y2 = e.clientY - rect.top
+const deleteDisplay = (id) => {
+  store.commit("deleteDisplay", { id })
+}
+// ����pianoroll��startMoveNote
+const startMoveDisplay = (display, e) => {
+  const gridRect = gridEl.value.$el.getBoundingClientRect()
 
-// 		// 计算选中范围
-// 		store.state.patterns.forEach(pattern => {
-// 			const patternRect = {
-// 				left: pattern.start * 25,
-// 				top: (88 - pattern.pitch) * 50,
-// 				right: (pattern.start + pattern.duration) * 25,
-// 				bottom: (88 - pattern.pitch + 1) * 50
-// 			}
+  dragState = {
+    type: "move",
+    displayId: display.id,
+    startX: Math.floor((e.clientX - gridRect.left) / 25),
+    startY: Math.floor((e.clientY - gridRect.top) / 50),
+    originalPos: { ...display },
+  }
+}
+// ����pianoroll��startResizeNote
+const startResizeDisplay = (display, e) => {
+  e.stopPropagation()
+  const gridRect = gridEl.value.$el.getBoundingClientRect()
+  dragState = {
+    type: "resize",
+    displayId: display.id,
+    startX: Math.floor((e.clientX - gridRect.left) / 25),
+    originalPos: { ...display },
+  }
+}
+// ����pianoroll��MoveNote
+const moveDisplay = (e) => {
+  const gridRect = gridEl.value.$el.getBoundingClientRect()
+  const x = Math.floor((e.clientX - gridRect.left) / 25)
+  const y = Math.floor((e.clientY - gridRect.top) / 50)
 
-// 			if (isRectOverlap(selectionBox.value, patternRect)) {
-// 				selectedpatterns.value.add(pattern.id)
-// 			} else {
-// 				selectedpatterns.value.delete(pattern.id)
-// 			}
-// 		})
-// 	}
+  if (x === moveX.value && y === moveY.value) return
+  moveX.value = x
+  moveY.value = y
 
-// 	// 处理拖拽移动逻辑
-// 	const dx = e.clientX - dragState.startX
-// 	const dy = e.clientY - dragState.startY
+  const dx = x - dragState.startX
+  const dy = y - dragState.startY
 
-// 	if (dragState.type === 'move') {
-// 		const newpattern = {
-// 			...dragState.originalPos,
-// 			start: Math.floor((dragState.originalPos.start * 25 + dx) / 25),
-// 			row: 88 - Math.floor((dragState.originalPos.row * 50 + dy) / 50)
-// 		}
-// 		store.commit('updatepatternlength', newpattern)
-// 	}
-// }
+  let newStarttime = dragState.originalPos.starttime + dx
+  let newChannel = dragState.originalPos.channel + dy
 
-// const handleCanvasMouseUp = () => {
-// 	if (dragState?.type === 'select') {
-// 		// 提交框选结果
-// 		store.commit('updateSelection', Array.from(selectedpatterns.value))
-// 	}
-// 	dragState = null
-// }
+  newStarttime = Math.max(0, newStarttime)
+  newChannel = Math.max(0, Math.min(4, newChannel))
 
-// // 矩形碰撞检测
-// const isRectOverlap = (a, b) => {
-// 	return a.x1 < b.right && a.x2 > b.left && a.y1 < b.bottom && a.y2 > b.top
-// }
+  store.commit("updateDisplayPosition", {
+    id: dragState.displayId,
+    starttime: newStarttime,
+    channel: newChannel,
+  })
+}
+// ����pianoroll��resizeNote
+const resizeDisplay = (e) => {
+  const gridRect = gridEl.value.$el.getBoundingClientRect()
+  const x = Math.floor((e.clientX - gridRect.left) / 25)
+  if (x === resizeX.value) return
+  resizeX.value = x
+  // console.log("update")
+  const dx = x - dragState.startX
 
-// // 键盘事件监听
-// document.addEventListener('keydown', (e) => {
-// 	if (e.key === 'Delete') {
-// 		store.commit('DELETE_SELECTED')
-// 	}
-// 	if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-// 		const patternsToCopy = store.state.patterns.filter(n => store.state.selectedpatterns.includes(n.id))
-// 		store.commit('COPY_patternS', patternsToCopy)
-// 	}
-// })
+  let newDuration = dragState.originalPos.duration + dx
+  newDuration = Math.max(1, newDuration)
+  tmpDuration.value = newDuration
+
+  store.commit("updateDisplayDuration", {
+    id: dragState.displayId,
+    duration: newDuration,
+  })
+}
 </script>
 
 <style scoped>
-.pattern {
+.display {
   z-index: 9;
   opacity: 1;
   position: absolute;
+  box-sizing: border-box;
+}
+
+.display-resize-handle {
+  position: absolute;
+  background-color: rgba(255, 191, 0, 0.5);
+  cursor: ew-resize;
+  z-index: 10;
 }
 </style>

@@ -1,3 +1,4 @@
+/* 主要装饰 */
 :root {
   --pixel-primary: #eee;
   --pixel-secondary: #000;
@@ -41,7 +42,8 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
-th, td {
+th,
+td {
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
@@ -57,8 +59,10 @@ td {
 
 /* 滚动条滑块 */
 ::-webkit-scrollbar-thumb {
-  background: #888; 
-  border: 2px solid, #eee;
+  background: #888;
+  border:
+    2px solid,
+    #eee;
 }
 
 /* 滚动条轨道 */

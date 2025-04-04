@@ -1,3 +1,4 @@
+<-- 开发者页面 -->
 <template>  
     <div>
       <a href="https://github.com/mindtravel/8bits-of-rust" target="_blank" rel="noopener">
@@ -8,10 +9,5 @@
       <my-text content = "刘宗熹 任致远 商邑飞 吴童 闫宏远" size="medium" />
   </div>
 </template>
-<script>
-
-export default {
-}
-</script>
 <style>
 </style>

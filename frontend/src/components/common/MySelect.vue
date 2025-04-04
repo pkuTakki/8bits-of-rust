@@ -1,15 +1,15 @@
+<!-- 像素风格下拉选择框 -->
 <template>
   <div class="pixel-select" @click="toggleDropdown">
     <div class="selected-option">
-      <my-text :content="selectedLabel || '点击选择...'" size="medium" />
+      <my-text :content="selectedLabel || '请选择...'" size="medium" />
       <div class="dropdown-arrow">▼</div>
     </div>
     <div v-show="isOpen" class="dropdown-options">
       <div
         v-for="(option, index) in options"
         class="option"
-        @click.stop="selectOption(option)"
-      >
+        @click.stop="selectOption(option)">
         <my-text :content="option.label" size="medium" />
       </div>
     </div>
@@ -17,44 +17,46 @@
 </template>
 
 <script>
-export default {
-  name: 'MySelect',
-  props: {
-    options: {
-      type: Array,
-      required: true,
-      validator: (value) => value.every((opt) => 'value' in opt && 'label' in opt),
-    },
-    value: {
-      type: [String, Number],
-      default: '',
-    },
+export default { name: "MySelect" }
+</script>
+<script setup>
+import { ref, watch } from "vue"
+
+const props = defineProps({
+  options: {
+    type: Array,
+    required: true,
+    validator: (value) =>
+      value.every((opt) => "value" in opt && "label" in opt),
   },
-  data() {
-    return {
-      isOpen: false,
-      selectedLabel: '',
-    }
+  value: {
+    type: [String, Number],
+    default: "",
   },
-  watch: {
-    value: {
-      immediate: true,
-      handler(newVal) {
-        const selected = this.options.find((opt) => opt.value === newVal)
-        this.selectedLabel = selected ? selected.label : ''
-      },
-    },
+})
+
+const emit = defineEmits(["input"])
+
+const isOpen = ref(false)
+const selectedLabel = ref("")
+
+watch(
+  () => props.value,
+  (newVal) => {
+    const selected = props.options.find((opt) => opt.value === newVal)
+    selectedLabel.value = selected ? selected.label : ""
   },
-  methods: {
-    toggleDropdown() {
-      this.isOpen = !this.isOpen
-    },
-    selectOption(option) {
-      this.$emit('input', option.value)
-      this.selectedLabel = option.label
-      this.isOpen = false
-    },
-  },
+  { immediate: true },
+)
+
+const toggleDropdown = () => {
+  isOpen.value = !isOpen.value
+}
+
+const selectOption = (option) => {
+  emit("input", option.value)
+  selectedLabel.value = option.label
+  isOpen.value = false
 }
 </script>
 
