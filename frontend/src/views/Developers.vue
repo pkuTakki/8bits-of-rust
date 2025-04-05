@@ -2,7 +2,7 @@
 <template>
   <div>
     <a
-      href="https://github.com/mindtravel/8bits-of-rust"
+      href="https://github.com/YHStar/8bits-of-rust"
       target="_blank"
       rel="noopener"
     >
