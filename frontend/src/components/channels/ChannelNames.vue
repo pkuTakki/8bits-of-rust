@@ -1,23 +1,26 @@
+<!-- 音轨左边栏,显示音轨名称 -->
 <template>
   <div class="key-column">
-    <div v-for="i in this.Range" class="key" :style="{ top: (i - 1) * 50 + 'px' }">
+    <div
+      v-for="i in proxy.CHANNEL_RANGE"
+      :key="i"
+      class="key"
+      :style="{ top: (i - 1) * 50 + 'px' }">
       <my-text
         :content="'通道' + i"
-        :style="{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50px' }"
-      />
+        :style="{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '50px',
+        }" />
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    Range: {
-      type: Number,
-      default: 88,
-    },
-  },
-}
+<script setup>
+import { getCurrentInstance } from "vue"
+const { proxy } = getCurrentInstance()
 </script>
 
 <style scoped>
@@ -44,6 +47,5 @@ export default {
   z-index: 2;
   height: 20px !important;
   border-left: 30px solid #fff !important;
-  /* border-top:2px solid #fff!important; */
 }
 </style>
