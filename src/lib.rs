@@ -44,3 +44,10 @@ use util::parameter::baseconst::T_BEAT;
 use util::parameter::baseconst::FREQ_DATA;
 use util::parameter::baseconst::LOOP_TIMES;
 use util::parameter::baseconst::MAX_POLY;
+
+extern crate wasm_bindgen;
+use wasm_bindgen::prelude::*;
+#[wasm_bindgen]
+pub fn test() -> String {
+    "Wasm Vue test!".to_string()
+}
