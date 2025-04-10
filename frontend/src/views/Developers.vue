@@ -13,8 +13,8 @@
     <my-text content="刘宗熹 任致远 商邑飞 吴童 闫宏远" size="medium" />
   </div>
 </template>
-<script setup>
+<!-- <script setup>
 import * as wasm from "eight_bits_of_rust"
 alert(wasm.test())
-</script>
+</script> -->
 <style></style>
