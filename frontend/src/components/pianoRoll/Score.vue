@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, reactive, computed, onMounted } from "vue"
 import { useStore, mapState } from "vuex"
 
 const store = useStore()
@@ -50,9 +50,12 @@ let dragState = null
 const selectedNotes = ref(new Set())
 const selectionBox = ref({ x1: 0, y1: 0, x2: 0, y2: 0 })
 
-const moveX = ref(0)
-const moveY = ref(0)
-const resizeX = ref(0)
+const dragParams = reactive({
+  moveX: 0,
+  moveY: 0,
+  resizeX: 0
+});
+
 // 下一次新建note时,duration设置为最近操作过音符的note
 const tmpDuration = ref(2)
 
@@ -138,9 +141,9 @@ const moveNote = (e) => {
   // 计算相对网格的坐标
   const x = Math.floor((e.clientX - gridRect.left) / 25)
   const y = Math.floor((e.clientY - gridRect.top) / 20)
-  if (moveX.value === x && moveY.value === y) return
-  moveX.value = x
-  moveY.value = y
+  if (dragParams.moveX === x && dragParams.moveY === y) return
+  dragParams.moveX = x
+  dragParams.moveY = y
   // 计算移动距离
   const dx = x - dragState.startX
   const dy = y - dragState.startY
@@ -167,8 +170,8 @@ const resizeNote = (e) => {
   const gridRect = gridEl.value.$el.getBoundingClientRect()
 
   const x = Math.floor((e.clientX - gridRect.left) / 25)
-  if (x === resizeX.value) return
-  resizeX.value = x
+  if (x === dragParams.resizeX) return
+  dragParams.resizeX = x
 
   const dx = x - dragState.startX
 
