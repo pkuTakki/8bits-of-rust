@@ -30,6 +30,7 @@ const notes = computed(() => store.state.notes)
 const gridEl = ref(null)
 
 // 音符样式计算
+// ref响应式变量在template中会自动解包，这里的函数传入参数都是自动解包后ref变量
 const noteStyle = (row, col, duration) => ({
   left: `${col * 25}px`,
   top: `${row * 20 + 1}px`,
@@ -94,7 +95,7 @@ const addNote = (e) => {
   const newNote = {
     id: Date.now(),
     starttime: Math.floor(x / 25),
-    duration: tmpDuration,
+    duration: tmpDuration.value,
     pitch: Math.floor(y / 20),
   }
   store.commit("addNote", newNote)
@@ -109,7 +110,6 @@ const deleteNote = (id, e) => {
 // 开始挪动音符
 const startMoveNote = (note, e) => {
   const gridRect = gridEl.value.$el.getBoundingClientRect()
-
   dragState = {
     type: "move",
     noteId: note.id,

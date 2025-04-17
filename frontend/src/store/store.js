@@ -86,6 +86,7 @@ export default createStore({
       state.notes.push(note)
     },
     deleteNote(state, id) {
+      console.log("deleted note i")
       // const note_to_delete = state.notes.find((n) => n.id == id)
       // state.current_pattern.delete_note(note_to_delete.pitch, note_to_delete.starttime, note_to_delete.starttime + note_to_delete.duration)
       state.notes = state.notes.filter((n) => n.id !== id)
