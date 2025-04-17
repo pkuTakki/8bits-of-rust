@@ -85,11 +85,11 @@ export default createStore({
       // state.current_pattern.insert_note(note.pitch, note.starttime, note.starttime + note.duration.value)
       state.notes.push(note)
     },
-    deleteNote(state, id) {
+    deleteNote(state, note) {
       console.log("deleted note i")
       // const note_to_delete = state.notes.find((n) => n.id == id)
       // state.current_pattern.delete_note(note_to_delete.pitch, note_to_delete.starttime, note_to_delete.starttime + note_to_delete.duration)
-      state.notes = state.notes.filter((n) => n.id !== id)
+      state.notes = state.notes.filter((n) => n.id !== note.id)
     },
     updateNotePosition(state, { id, starttime, pitch }) {
       const note = state.notes.find((n) => n.id === id)
@@ -105,10 +105,8 @@ export default createStore({
       if (note) {
         //state.current_pattern.delete_note(note.pitch, note.starttime, note.starttime + note.duration.value)
         //state.current_pattern.insert_note(note.pitch, note.starttime, note.starttime + duration.value)
+        note.duration = duration
       }
-      state.notes = state.notes.map((note) =>
-        note.id === id ? { ...note, duration } : note, // 必须深拷贝
-      )
     },
     emptyNotes(state) {
       state.notes = []

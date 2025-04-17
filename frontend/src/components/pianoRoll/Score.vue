@@ -9,7 +9,7 @@
       <div
         class="note"
         :style="noteStyle(note.pitch, note.starttime, note.duration)"
-        @mousedown.right="deleteNote(note.id, $event)"
+        @mousedown.right="deleteNote(note, $event)"
         @mousedown.left="startMoveNote(note, $event)"></div>
 
       <div
@@ -105,9 +105,9 @@ const addNote = (e) => {
 }
 
 // 删除音符
-const deleteNote = (id, e) => {
+const deleteNote = (note, e) => {
   e.preventDefault()
-  store.commit("deleteNote", id)
+  store.commit("deleteNote", note)
 }
 
 // 开始挪动音符
