@@ -1,6 +1,7 @@
 // 状态管理
 import { createStore } from "vuex"
 import createPersistedState from "vuex-persistedstate"
+import { songWrapper, patternWrapper, init, init_panic_hook } from "eight_bits_of_rust"
 
 export default createStore({
   state: {
@@ -28,8 +29,18 @@ export default createStore({
     scrollX: 0,
     scrollY: 0,
 
+    rust_songs: [],
+    current_song: null,
+    current_pattern: null,
   },
   mutations: {
+    // WASM相关
+    initWasmInstance(state) {
+      init_panic_hook()
+      state.current_song = songWrapper.new("tmp")
+      state.current_pattern = patternWrapper.new(0, "SB")
+    },
+
     // 页面状态相关
     setCurrentRoute(state, route) {
       state.currentRoute = route
@@ -71,27 +82,38 @@ export default createStore({
 
     // state.notes
     addNote(state, note) {
+      // state.current_pattern.insert_note(note.pitch, note.starttime, note.starttime + note.duration.value)
       state.notes.push(note)
     },
     deleteNote(state, id) {
+      // const note_to_delete = state.notes.find((n) => n.id == id)
+      // state.current_pattern.delete_note(note_to_delete.pitch, note_to_delete.starttime, note_to_delete.starttime + note_to_delete.duration)
       state.notes = state.notes.filter((n) => n.id !== id)
     },
     updateNotePosition(state, { id, starttime, pitch }) {
       const note = state.notes.find((n) => n.id === id)
       if (note) {
+        // state.current_pattern.delete_note(note.pitch, note.starttime, note.starttime + note.duration.value)
+        // state.current_pattern.insert_note(pitch, starttime, starttime + note.duration.value)
         note.pitch = pitch
         note.starttime = starttime
       }
     },
     updateNoteDuration(state, { id, duration }) {
+      const note = state.notes.find((n) => n.id === id)
+      if (note) {
+        //state.current_pattern.delete_note(note.pitch, note.starttime, note.starttime + note.duration.value)
+        //state.current_pattern.insert_note(note.pitch, note.starttime, note.starttime + duration.value)
+      }
       state.notes = state.notes.map((note) =>
         note.id === id ? { ...note, duration } : note, // 必须深拷贝
       )
     },
     emptyNotes(state) {
       state.notes = []
+      // state.current_pattern.clear()
     },
-    // 切换选中的pattern时,将note复制回就pattern,从新pattern中复制note
+    // 切换选中的pattern时,将note复制回旧pattern,从新pattern中复制note
     saveNotes(state) {
       const pattern = state.patterns.find((p) => p.id === state.activePattern)
       if (pattern) {
@@ -133,9 +155,11 @@ export default createStore({
     // state.songs
     addSong(state, song) {
       state.songs.push(song)
+      // state.rust_songs.push(songWrapper.new(song))
     },
     deleteSong(state, index) {
       state.songs.splice(index, 1)
+      // state.rust_songs.splice(index, 1)
     },
     setSongName(state, name) {
       state.songName = name

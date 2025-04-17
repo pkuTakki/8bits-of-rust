@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Write;
+use std::mem::swap;
 
 use crate::util::basetype::ChannelID;
 use crate::util::basetype::Midi;
@@ -29,6 +30,17 @@ impl Pattern {
             len: 0,
             // channel_id: channel_id,
         }
+    }
+
+    pub fn rename(&mut self, new_name: &str) {
+        self.name.clone_from(&new_name.to_string());
+    }
+
+    pub fn clear(&mut self) {
+        self.name.clear();
+        self.score.clear();
+        self.start_time = 0;
+        self.len = 0;
     }
 
     pub fn get_len(&self) -> Timebase {

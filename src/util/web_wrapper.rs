@@ -1,6 +1,6 @@
-use crate::util::song;
-
 use super::song::Song;
+use super::pattern::pattern::Pattern;
+use crate::Note;
 use super::basetype::Timebase;
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -81,3 +81,28 @@ impl songWrapper {
         self.song.read_from_file(file_path).unwrap();
     }
 } // impl songWrapper
+
+#[wasm_bindgen]
+pub struct patternWrapper {
+    pattern: Pattern,
+}
+#[wasm_bindgen]
+impl patternWrapper {
+    pub fn new(t: Timebase, name: &str) -> Self {
+        Self {
+            pattern: Pattern::new(t, name),
+        }
+    }
+    pub fn insert_note(&mut self, note_idx: Note, start_time:Timebase, end_time: Timebase) {
+        self.pattern.insert_note(note_idx, start_time, end_time).unwrap();
+    }
+    pub fn delete_note(&mut self, note_idx: Note, start_time:Timebase, end_time: Timebase) {
+        self.pattern.delete_note(note_idx, start_time, end_time).unwrap();
+    }
+    pub fn clear(&mut self) {
+        self.pattern.clear();
+    }
+    pub fn rename(&mut self, new_name: &str) {
+        self.pattern.rename(new_name);
+    }
+}
