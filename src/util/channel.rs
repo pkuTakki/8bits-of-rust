@@ -1,5 +1,8 @@
 use super::basefn::midi_generator;
+use super::basetype::{PatternID, Timebase};
+use super::pattern::display;
 use crate::Score;
+use crate::util::pattern::display::Display;
 
 pub struct Channel {
     pub name: String,
@@ -10,6 +13,7 @@ pub struct Channel {
     pub n_poly: usize,
     pub pan: i8,
     pub be_modulated: bool,
+    pub display: Vec<Display>,
 }
 
 impl Channel {
@@ -31,6 +35,46 @@ impl Channel {
             n_poly: n_poly, // 默认多音数量
             pan: pan,       // 默认声相（0 表示居中）
             be_modulated: be_modulated,
+            display: Vec::new(),
         }
+    } // new
+
+    // 希望把维护display按照start time有序的工作交给前端
+    pub fn delete_display(&mut self, index: usize) -> Display {
+        self.display.remove(index)
+    }
+
+    pub fn filter_display_without_pattern_id(&mut self, id: PatternID) {
+        if self.display.is_empty() {
+            return;
+        }
+        let mut tmpVec:Vec<Display> = Vec::new();
+        for dis in &self.display {
+            if dis.pattern_id != id {
+                tmpVec.push(*dis);
+            }
+        }
+        // 找到不包含id的pattern，然后置换
+        std::mem::swap(&mut self.display, &mut tmpVec);
+    }
+
+    pub fn insert_display(&mut self, index: usize, element: Display) {
+        self.display.insert(index, element)
+    }
+
+    pub fn push_display(&mut self, element: Display) {
+        self.display.push(element);
+    }
+
+    pub fn sort_display(&mut self) {
+        self.display.sort_by_key(|a| a.start_time);
+    }
+
+    pub fn change_display_duration(&mut self, index: usize, new_duration: Timebase) {
+        self.display[index].change_duration(new_duration);
+    }
+
+    pub fn change_display_start_time(&mut self, index: usize, new_start_time: Timebase) {
+        self.display[index].change_start_time(new_start_time);
     }
 }

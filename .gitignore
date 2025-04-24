@@ -1,5 +1,6 @@
 /target
 /wav
+/pkg
 *.song
 Cargo.lock
 /frontend/node_modules

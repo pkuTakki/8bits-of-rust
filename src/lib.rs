@@ -1,4 +1,5 @@
 extern crate libm;
+extern crate getrandom;
 extern crate rand;
 
 mod util;
@@ -42,30 +43,16 @@ use util::parameter::baseconst::FREQ_DATA;
 use util::parameter::baseconst::LOOP_TIMES;
 use util::parameter::baseconst::MAX_POLY;
 
-// use winapi::um::winuser::{FindWindowA, ShowWindow, SW_HIDE};
+extern crate wasm_bindgen;
+extern crate console_error_panic_hook;
+use wasm_bindgen::prelude::*;
+use web_sys::{AudioContext, AudioBuffer, AudioBufferSourceNode};
 
-// fn hide_window() {
-//     unsafe {
-//         let window_title = "你的窗口标题"; // 替换为你的窗口标题
-//         let hwnd = FindWindowA(std::ptr::null(), window_title.as_ptr() as *const i8);
-
-//         if !hwnd.is_null() {
-//             // 隐藏窗口
-//             ShowWindow(hwnd, SW_HIDE);
-//         }
-//     }
-
-//     // 你的程序逻辑
-//     println!("窗口已隐藏");
-// }
-
-fn main() {
-    let mut song = init_test_song();
-    // song.save_to_file("my_song.song");
-    // song.read_from_file("my_song.song").unwrap();
-    let name = "my_wave";
-    let sample = mixer(&song);
-    // let sample = mixer(&SONG);
-    generate_wav(name, sample);
-    load_wav(name);
+#[wasm_bindgen]
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
+}
+#[wasm_bindgen]
+pub fn test() {
+    
 }

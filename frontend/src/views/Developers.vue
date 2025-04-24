@@ -2,7 +2,7 @@
 <template>
   <div>
     <a
-      href="https://github.com/mindtravel/8bits-of-rust"
+      href="https://github.com/YHStar/8bits-of-rust"
       target="_blank"
       rel="noopener"
     >
@@ -13,4 +13,8 @@
     <my-text content="刘宗熹 任致远 商邑飞 吴童 闫宏远" size="medium" />
   </div>
 </template>
+<!-- <script setup>
+import * as wasm from "eight_bits_of_rust"
+alert(wasm.test())
+</script> -->
 <style></style>
