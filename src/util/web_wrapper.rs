@@ -7,6 +7,7 @@ use super::basetype::{PatternID, Timebase};
 extern crate wasm_bindgen;
 use wasm_bindgen::prelude::*;
 use web_sys::{AudioContext, AudioBuffer, AudioBufferSourceNode};
+use gloo_console::log;
 
 #[wasm_bindgen]
 pub struct songWrapper {
@@ -123,7 +124,10 @@ impl songWrapper {
         self.song.push_display(channel_index, pattern_id, duration, start_time);
     }
 
+    // 播放当前工程中的音频
     pub fn play(&self) -> Result<(), JsValue> {
+        // 从歌曲文件渲染采样
+        // TODO：设置音频缓冲区，实时渲染音频并且播放
         let sample = mixer(&self.song);
         
         // 转换 i8 到 Float32
