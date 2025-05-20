@@ -81,12 +81,13 @@ export default createStore({
     updateDisplayPosition(state, { id, starttime, channel }) {
       const display = state.displays.find((d) => d.id === id)
       if (display) {
-        display.starttime = starttime
-        display.channel = channel
         // 对wasm，直接先删除再插入
         state.wasm_song.delete_display(display.channel, display.patternId, display.starttime)
         state.wasm_song.push_display(channel, display.patternId, display.duration, starttime)
         state.wasm_song.sort_display()
+
+        display.starttime = starttime
+        display.channel = channel
       }
     },
     updateDisplayDuration(state, { id, duration }) {
