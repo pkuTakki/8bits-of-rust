@@ -14,13 +14,24 @@ export default createStore({
     // display列表
     displays: [],
 
-    selectedNotes: new Set(),
-    separatorPosition: 300,
 
+    //当前路径
     currentRoute: "/",
+    //被激活的页面
     activeComposePage: "plugin",
     // 激活中的pattern的id
     activePattern: 0,
+
+    
+    //mixer状态
+    n_channels: 5,
+    volumes: [80, 80, 80, 80, 80],
+    panValues: [0, 0, 0, 0, 0],
+    
+    
+    //未使用：选中的音符
+    selectedNotes: new Set(),
+    separatorPosition: 300,
 
     exportFormat: "",
     songName: "",
@@ -38,11 +49,11 @@ export default createStore({
       init_panic_hook()
       state.wasm_song = songWrapper.new("TMP")
       // 先创建5个channel
-      state.wasm_song.new_channel("1", "square", 0.5, 1, 0, true)
-      state.wasm_song.new_channel("2", "square", 0.5, 1, 0, true)
-      state.wasm_song.new_channel("3", "square", 0.5, 1, 0, true)
-      state.wasm_song.new_channel("4", "square", 0.5, 1, 0, true)
-      state.wasm_song.new_channel("5", "square", 0.5, 1, 0, true)
+      state.wasm_song.new_channel("1", "square", 0.2, 1, 0, true)
+      state.wasm_song.new_channel("2", "saw", 0.2, 1, 0, true)
+      state.wasm_song.new_channel("3", "spike", 0.2, 1, 0, true)
+      state.wasm_song.new_channel("4", "triangle", 0.2, 1, 0, true)
+      state.wasm_song.new_channel("5", "square", 0.2, 1, 0, true)
     },
     play(state) {
       state.wasm_song.play()
@@ -117,15 +128,22 @@ export default createStore({
         note.starttime = starttime
       }
     },
+    // 更新音符持续时间：
+    // 直接删除旧的音符，插入更新后的音符
     updateNoteDuration(state, { id, duration }) {
       const note = state.notes.find((n) => n.id === id)
       if (note) {
-        if (duration < note.duration) {
-          state.wasm_song.edit_pattern("delete", 88 - note.pitch, note.starttime, note.starttime + note.duration)
-        }
-        else if (duration > note.duration) {
-          state.wasm_song.edit_pattern("insert", 88 - note.pitch, note.starttime, note.starttime + duration)
-        }
+
+        // if (duration < note.duration) {
+        //   state.wasm_song.edit_pattern("delete", 88 - note.pitch, note.starttime, note.starttime + note.duration)
+        // }
+        // else if (duration > note.duration) {
+        //   state.wasm_song.edit_pattern("insert", 88 - note.pitch, note.starttime, note.starttime + note.duration)
+        // }
+        // note.duration = duration
+        state.wasm_song.edit_pattern("delete", 88 - note.pitch, note.starttime, note.starttime + note.duration)
+        state.wasm_song.edit_pattern("insert", 88 - note.pitch, note.starttime, note.starttime + duration)
+
         note.duration = duration
       }
     },
@@ -188,6 +206,34 @@ export default createStore({
     setSongName(state, name) {
       state.songName = name
     },
+
+
+    //mixer状态相关
+    //更新通道音量
+    updateVolume(state, { index, value }) {
+      console.log("updateVolume index = ", index, " value = ", value)
+      state.volumes = state.volumes.map((v, i) => i === index ? value : v)
+      // TODO: add wasm function here
+    },
+    //更新通道声相
+    updatePanValue(state, { index, value }) {
+      console.log("updatePan index = ", index, " value = ", value)
+      state.panValues = state.panValues.map((v, i) => i === index ? value : v)
+      // TODO: add wasm function here
+    },
+    // 设置轨道数量（应该不会使用）
+    setNChannels(state, value) {
+      state.n_channels = value
+    },
+    // 设置音量初值（读取歌曲文件的时候会用）
+    setVolumes(state, newVolumes) {
+      state.volumes = [...newVolumes] // 保证响应式更新[3](@ref)
+    },
+    // 设置声相初值（读取歌曲文件的时候会用）
+    setPanValues(state, newPanValues) {
+      state.panValues = [...newPanValues]
+    },
+
     // 未使用的方法
     setSeparatorPosition(state, position) {
       state.separatorPosition = position
