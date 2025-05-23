@@ -1,7 +1,7 @@
 // 状态管理
 import { createStore } from "vuex"
 import createPersistedState from "vuex-persistedstate"
-import { songWrapper, init, init_panic_hook } from "eight_bits_of_rust"
+import { SongWrapper, init_panic_hook } from "eight_bits_of_rust"
 
 export default createStore({
   state: {
@@ -22,12 +22,23 @@ export default createStore({
     // 激活中的pattern的id
     activePattern: 0,
 
-    
+
     //mixer状态
-    n_channels: 5,
-    volumes: [80, 80, 80, 80, 80],
-    panValues: [0, 0, 0, 0, 0],
-    
+    channels_params: [
+      { name: 'lead', volume: 0.15, pan: 0 },
+      { name: 'pad', volume: 0.15, pan: 0 },
+      { name: 'chord', volume: 0.1, pan: 0 },
+      { name: 'bass', volume: 0.4, pan: 0 },
+      { name: 'noise', volume: 0.2, pan: 0 },
+    ],
+    //synthesiser状态
+    synths_params: [
+      { preset: "square", n_poly: 1, be_modulated: true },
+      { preset: "saw", n_poly: 1, be_modulated: true },
+      { preset: "spike", n_poly: 1, be_modulated: true },
+      { preset: "triangle", n_poly: 1, be_modulated: true },
+      { preset: "noise", n_poly: 1, be_modulated: true },
+    ],
     
     //未使用：选中的音符
     selectedNotes: new Set(),
@@ -47,13 +58,56 @@ export default createStore({
     initWasmInstance(state) {
       // 初始化错误捕捉函数并初始化wasm实例
       init_panic_hook()
-      state.wasm_song = songWrapper.new("TMP")
-      // 先创建5个channel
-      state.wasm_song.new_channel("1", "square", 0.2, 1, 0, true)
-      state.wasm_song.new_channel("2", "saw", 0.2, 1, 0, true)
-      state.wasm_song.new_channel("3", "spike", 0.2, 1, 0, true)
-      state.wasm_song.new_channel("4", "triangle", 0.2, 1, 0, true)
-      state.wasm_song.new_channel("5", "square", 0.2, 1, 0, true)
+      state.wasm_song = SongWrapper.new("TMP")
+      // 先创建channel
+      for (var i = 0; i < state.channels_params.length; ++i){
+        // console.log(
+        //   state.channels_params[i].name,
+        //   state.channels_params[i].volume,
+        //   state.channels_params[i].pan,
+        //   state.synths_params[i].preset,
+        //   state.synths_params[i].n_poly,
+        //   state.synths_params[i].be_modulated,
+        // )
+        state.wasm_song.new_channel(
+          state.channels_params[i].name,
+          state.channels_params[i].volume,
+          state.channels_params[i].pan,
+          state.synths_params[i].preset,
+          state.synths_params[i].n_poly,
+          state.synths_params[i].be_modulated,
+        )
+      }
+
+      // 把正在编辑的pattern保存
+      var pattern = state.patterns.find((p) => p.id === state.activePattern)
+      if (pattern) {
+        // console.log("save notes to old pattern", pattern.notes, state.notes)
+        pattern.notes = state.notes
+      }
+      //初始化所有pattern
+      for (var i = 0; i < state.patterns.length; ++i){
+        var pattern = state.patterns[i]
+        console.log(
+          pattern.name, 
+          pattern.id
+        )
+        state.wasm_song.new_pattern(pattern.name, pattern.id)
+        state.wasm_song.set_active_pattern(pattern.id)
+        for (var j = 0; j < pattern.notes.length; ++j){
+          var note = pattern.notes[j]
+          state.wasm_song.edit_pattern("insert", 88 - note.pitch, note.starttime, note.starttime + note.duration)
+        }
+      }
+      //初始化active pattern
+      state.wasm_song.set_active_pattern(state.activePattern)
+
+      // 初始化所有display
+      for (var i = 0; i < state.displays.length; ++i){
+        var display = state.displays[i]
+        state.wasm_song.push_display(display.channel, display.patternId, display.duration, display.starttime)
+      }
+      state.wasm_song.sort_display()
     },
     play(state) {
       state.wasm_song.play()
@@ -154,7 +208,7 @@ export default createStore({
     saveNotes(state) {
       const pattern = state.patterns.find((p) => p.id === state.activePattern)
       if (pattern) {
-        console.log("save notes to old pattern", pattern.notes, state.notes)
+        // console.log("save notes to old pattern", pattern.notes, state.notes)
         pattern.notes = state.notes
       }
     },
@@ -162,11 +216,11 @@ export default createStore({
       const pattern = state.patterns.find((p) => p.id === state.activePattern)
       if (pattern) {
         state.notes = pattern.notes
-        console.log("load notes from new pattern", pattern.notes, state.notes)
+        // console.log("load notes from new pattern", pattern.notes, state.notes)
       }
-      for (var i = 0; i < state.notes.length; ++i) {
-        console.log(state.notes[i].id)
-      }
+      // for (var i = 0; i < state.notes.length; ++i) {
+        // console.log(state.notes[i].id)
+      // }
     },
 
     // state.patterns
@@ -176,7 +230,7 @@ export default createStore({
     },
     deletePattern(state, id) {
       state.patterns = state.patterns.filter((n) => n.id !== id)
-      state.displays = state.displays.filter((n) => n.id !== id)
+      state.displays = state.displays.filter((n) => n.patternId !== id)// 删除pattern也会删除对应的所有display
       state.notes = []
       state.wasm_song.delete_pattern(id)
       state.wasm_song.filter_display_without_pattern_id(id)
@@ -211,27 +265,28 @@ export default createStore({
     //mixer状态相关
     //更新通道音量
     updateVolume(state, { index, value }) {
-      console.log("updateVolume index = ", index, " value = ", value)
-      state.volumes = state.volumes.map((v, i) => i === index ? value : v)
-      // TODO: add wasm function here
+      console.log("updateVolume index = ", index, " value = ", value);
+      state.channels_params[index].volume = value;
+      state.wasm_song.set_channel_volume(index, value)
     },
     //更新通道声相
-    updatePanValue(state, { index, value }) {
-      console.log("updatePan index = ", index, " value = ", value)
-      state.panValues = state.panValues.map((v, i) => i === index ? value : v)
-      // TODO: add wasm function here
+    updatePan(state, { index, value }) {
+      state.channels_params[index].pan = value;
+      console.log("updatePan index = ", index, " value = ", state.channels_params[index].pan);
+      state.wasm_song.set_channel_pan(index, value)
+      // TODO: generate sound by the pan
+    },
+    // // 设置音量初值（读取歌曲文件的时候会用）
+    // setVolumes(state, newVolumes) {
+    //   state.volumes = [...newVolumes] // 保证响应式更新[3](@ref)
+    // },
+    // 设置音轨初值（读取歌曲文件的时候会用）
+    setChannelParams(state, newChannelParams) {
+      state.channels_params = [...newChannelParams];
     },
     // 设置轨道数量（应该不会使用）
     setNChannels(state, value) {
-      state.n_channels = value
-    },
-    // 设置音量初值（读取歌曲文件的时候会用）
-    setVolumes(state, newVolumes) {
-      state.volumes = [...newVolumes] // 保证响应式更新[3](@ref)
-    },
-    // 设置声相初值（读取歌曲文件的时候会用）
-    setPanValues(state, newPanValues) {
-      state.panValues = [...newPanValues]
+      state.n_channels = value;
     },
 
     // 未使用的方法
@@ -256,5 +311,5 @@ export default createStore({
     getActivePattern: (state) =>
       state.patterns.find((p) => p.id === state.activePattern),
   },
-  // plugins: [createPersistedState()],
+  plugins: [createPersistedState()],
 })

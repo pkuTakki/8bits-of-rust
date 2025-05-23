@@ -10,15 +10,15 @@ use web_sys::{AudioContext, AudioBuffer, AudioBufferSourceNode};
 use gloo_console::log;
 
 #[wasm_bindgen]
-pub struct songWrapper {
+pub struct SongWrapper {
     song: Song,
     active_pattern_index: usize,
 }
 
 #[wasm_bindgen]
-impl songWrapper {
+impl SongWrapper {
     pub fn new(name: &str) -> Self {
-        songWrapper {
+        SongWrapper {
             song: Song::new(name),
             active_pattern_index: UNEXIST_PATTERN_INDEX,
         }
@@ -31,17 +31,33 @@ impl songWrapper {
     pub fn new_channel(
         &mut self,
         name: &str,
-        preset: &str,
+
         volume: f32,
+        pan: f32,
+
+        preset: &str,
         n_poly: usize,
-        pan: i8,
         be_modulated: bool,
     ) {
+        log!(name);
         self.song.new_channel(name, preset, volume, n_poly, pan, be_modulated);
     } // fn new_channel
 
+
     pub fn clear(&mut self) {
         self.song.clear();
+    }
+
+    pub fn set_channel_preset(&mut self, index: usize, new_preset: &str){
+        self.song.set_channel_preset(index, new_preset);
+    }
+
+    pub fn set_channel_volume(&mut self, index: usize, new_volume: f32){
+        self.song.set_channel_volume(index, new_volume);
+    }
+
+    pub fn set_channel_pan(&mut self, index: usize, new_pan: f32){
+        self.song.set_channel_pan(index, new_pan);
     }
 
     pub fn clear_pattern_notes(&mut self) {
@@ -134,10 +150,15 @@ impl songWrapper {
     pub fn play(&self) -> Result<(), JsValue> {
         // 从歌曲文件渲染采样
         // TODO：设置音频缓冲区，实时渲染音频并且播放
-        let sample = mixer(&self.song);
+        let (left_sample, right_sample) = mixer(&self.song);
         
         // 转换 i8 到 Float32
-        let float_samples: Vec<f32> = sample
+        let float_left_samples: Vec<f32> = left_sample
+        .iter()
+        .map(|&x| x as f32 / 128.0)
+        .collect();        
+
+        let float_right_samples: Vec<f32> = right_sample
         .iter()
         .map(|&x| x as f32 / 128.0)
         .collect();
@@ -147,14 +168,15 @@ impl songWrapper {
 
         // 创建 AudioBuffer
         let buffer = audio_ctx
-        .create_buffer(1, sample.len() as u32, SAMPLE_RATE as f32)
+        .create_buffer(2, left_sample.len() as u32, SAMPLE_RATE as f32)
         .expect("Failed to create audio buffer");
-        buffer.copy_to_channel(&float_samples, 0)?;
+        buffer.copy_to_channel(&float_left_samples, 0)?;
+        buffer.copy_to_channel(&float_right_samples, 1)?;
 
-        // 创建并播放音频源
         let source = AudioBufferSourceNode::new(&audio_ctx)?;
         source.set_buffer(Some(&buffer));
         source.connect_with_audio_node(&audio_ctx.destination())?;
+        source.set_loop(false);
         source.start()?;
 
         Ok(())
@@ -167,7 +189,7 @@ impl songWrapper {
     // pub fn read_from_file(&mut self, file_path: &str) {
     //     self.song.read_from_file(file_path).unwrap();
     // }
-} // impl songWrapper
+} // impl SongWrapper
 
 /*
 #[wasm_bindgen]

@@ -39,7 +39,7 @@ impl Song {
         preset: &str,
         volume: f32,
         n_poly: usize,
-        pan: i8,
+        pan: f32,
         be_modulated: bool,
     ) {
         self.channels.push(Channel {
@@ -52,6 +52,18 @@ impl Song {
             display: Vec::new(),
         });
     } // new channel
+
+    pub fn set_channel_preset(&mut self, index: usize, new_preset: &str){
+        self.channels[index].set_preset(index, new_preset);
+    }
+
+    pub fn set_channel_volume(&mut self, index: usize, new_volume: f32){
+        self.channels[index].set_volume(index, new_volume);
+    }
+
+    pub fn set_channel_pan(&mut self, index: usize, new_pan: f32){
+        self.channels[index].set_pan(index, new_pan);
+    }
 
     // 创建新pattern
     pub fn new_pattern(
@@ -155,31 +167,41 @@ impl Song {
         std::mem::swap(&mut self.patterns[index], new_pattern);
     }
 
+    // 暂时不用二分，数据量不够大，而且会引发未知bug
     // pattern的id是由时间获取的，新的pattern id一定大于旧的，id必然按照index递增，故二分查找
     pub fn pattern_index(&self, id: PatternID) -> usize {
-        let mut left = 0 as usize;
-        let mut right = self.patterns.len();
-        let mut mid = right / 2;
+        let mut index = 0;
+        for pattern in &self.patterns{
+            if pattern.get_id() == id{
+                return index;
+            }
+            index += 1;
+        }
+        return UNEXIST_PATTERN_INDEX;
 
-        // 常规二分
-        while self.patterns[mid].get_id() != id {
-            if right - left <= 1 {
-                if self.patterns[right].get_id() == id {
-                    return right;
-                }
-                else {
-                    return UNEXIST_PATTERN_INDEX;
-                }
-            }
-            if self.patterns[mid].get_id() < id {
-                left = mid;
-            }
-            else {
-                right = mid;
-            }
-            mid = (right - left) / 2 + left;
-        } // while
+        // // 常规二分
+        // let mut left = 0 as usize;
+        // let mut right = self.patterns.len();
+        // let mut mid = right / 2;
 
-        mid
+        // while self.patterns[mid].get_id() != id {
+        //     if right - left <= 1 {
+        //         if self.patterns[right].get_id() == id {
+        //             return right;
+        //         }
+        //         else {
+        //             return UNEXIST_PATTERN_INDEX;
+        //         }
+        //     }
+        //     if self.patterns[mid].get_id() < id {
+        //         left = mid;
+        //     }
+        //     else {
+        //         right = mid;
+        //     }
+        //     mid = (right - left) / 2 + left;
+        // } // while
+
+        // mid
     } // index pattern
 }

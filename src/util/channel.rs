@@ -12,7 +12,7 @@ pub struct Channel {
     pub preset: String,// 通道预设名称
     pub volume: f32, // 通道音量大小
     pub n_poly: usize, // 通道复音数
-    pub pan: i8, // 通道声像
+    pub pan: f32, // 通道声像
     pub be_modulated: bool, // 通道中合成器声音是否经过fm调制
     pub display: Vec<Display>, // 通道的display列表
 }
@@ -25,7 +25,7 @@ impl Channel {
         preset: &str,
         volume: f32,
         n_poly: usize,
-        pan: i8,
+        pan: f32,
         be_modulated: bool,
     ) -> Self {
         Channel {
@@ -40,6 +40,18 @@ impl Channel {
         }
     } // new
 
+    pub fn set_preset(&mut self, index: usize, new_preset: &str){
+        self.preset = String::from(new_preset);
+    }
+
+    pub fn set_volume(&mut self, index: usize, new_volume: f32){
+        self.volume = new_volume;
+    }
+
+    pub fn set_pan(&mut self, index: usize, new_pan: f32){
+        self.pan = new_pan;
+    }
+
     // 希望把维护display按照start time有序的工作交给前端
     pub fn delete_display(&mut self, index: usize) -> Display {
         self.display.remove(index)
@@ -49,14 +61,14 @@ impl Channel {
         if self.display.is_empty() {
             return;
         }
-        let mut tmpVec:Vec<Display> = Vec::new();
+        let mut tem_vec:Vec<Display> = Vec::new();
         for dis in &self.display {
             if dis.pattern_id != id {
-                tmpVec.push(*dis);
+                tem_vec.push(*dis);
             }
         }
         // 找到不包含id的pattern，然后置换
-        std::mem::swap(&mut self.display, &mut tmpVec);
+        std::mem::swap(&mut self.display, &mut tem_vec);
     }
 
     pub fn insert_display(&mut self, index: usize, element: Display) {
